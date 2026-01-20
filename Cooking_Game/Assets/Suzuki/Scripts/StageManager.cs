@@ -346,11 +346,21 @@ public class StageManager : MonoBehaviour
             }
             mergeEventList.Clear();// リストをクリア
         }
+
+        const int eatLimit = 10;
+        int eatCount = GameConstants.Zero;
         // 食べる
         if (eatEventList.Count > 0)
         {
             for (int i = eatEventList.Count - 1; i >= 0; i--)
             {
+                // 回数チェック
+                eatCount++;
+                if(eatCount > eatLimit) break;
+
+                // nullチェック
+                if (eatEventList[i].First.Food == null || eatEventList[i].Second.Food == null) continue;
+
                 eatEventList[i].First.Food.OnEat(eatEventList[i].Second.Food, eatEventList[i].First.Velocity);
 
                 // 捕食SE再生

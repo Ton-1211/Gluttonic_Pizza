@@ -693,9 +693,12 @@ public class SystemManager : MonoBehaviour
             redMiddleText.gameObject.SetActive(true);
             greenMiddleText.gameObject.SetActive(true);
 
+            int redMidScore = CulcRedPreScore();
+            int greenMidScore = CulcGreenPreScore();
+
             // 表示
-            redMiddleText.SetText($"{0}", pizzaManager.culcScore(TeamColor.Red) + pizzaManager.culcScore(TeamColor.Yellow) + CulcRedPreScore());
-            greenMiddleText.SetText($"{0}", pizzaManager.culcScore(TeamColor.Blue) + pizzaManager.culcScore(TeamColor.Green) + CulcGreenPreScore());
+            redMiddleText.SetText($"{0}", redMidScore);
+            greenMiddleText.SetText($"{0}", greenMidScore);
         }
 
         // 乱入演出

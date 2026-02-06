@@ -182,6 +182,7 @@ public class SystemManager : MonoBehaviour
     [Header("ピザが取られるフェーズの時間"), SerializeField] float pickPhaseTime;
 
     [Header("--- タイムラインの設定 ---")]
+    [Header("チュートリアルのTimeline"), SerializeField] TimelineInfo tutorialTimelineInfo;
     [Header("ゲームの開始前Timeline"), SerializeField] TimelineInfo startGameTimeline;
     //[Header("ハーフタイムTimeline"), SerializeField] TimelineInfo breakTimeTimeline;
     [Header("赤の途中得点表示"), SerializeField] TextMeshProUGUI redMiddleText;
@@ -390,6 +391,9 @@ public class SystemManager : MonoBehaviour
     {
         if (!isStarted)
         {
+            // チュートリアルTimelineの再生
+            yield return GameConstants.PlayAndWaitTimeline(tutorialTimelineInfo.DirectorParent, tutorialTimelineInfo.Director);
+
             // ゲーム開始前Timelineの再生
             yield return GameConstants.PlayAndWaitTimeline(startGameTimeline.DirectorParent, startGameTimeline.Director);
 
@@ -697,8 +701,8 @@ public class SystemManager : MonoBehaviour
             int greenMidScore = CulcGreenPreScore();
 
             // 表示
-            redMiddleText.SetText($"{0}", redMidScore);
-            greenMiddleText.SetText($"{0}", greenMidScore);
+            redMiddleText.SetText(redMidScore.ToString());
+            greenMiddleText.SetText(greenMidScore.ToString());
         }
 
         // 乱入演出

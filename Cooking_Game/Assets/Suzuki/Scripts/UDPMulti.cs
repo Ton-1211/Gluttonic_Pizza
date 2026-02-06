@@ -250,7 +250,7 @@ public class UDPMulti : MonoBehaviour
     void OnDestroy()
     {
         // ソケットを閉じる
-        client.Close();
+        if(client != null) client.Close();
         client = null;
     }
 

@@ -184,6 +184,8 @@ public class SystemManager : MonoBehaviour
     [Header("--- タイムラインの設定 ---")]
     [Header("チュートリアルのTimeline"), SerializeField] TimelineInfo tutorialTimelineInfo;
     [Header("ゲームの開始前Timeline"), SerializeField] TimelineInfo startGameTimeline;
+    [Header("調理残り時間の表示"), SerializeField] TimerTimeline cookTimerTimeline;
+
     //[Header("ハーフタイムTimeline"), SerializeField] TimelineInfo breakTimeTimeline;
     [Header("赤の途中得点表示"), SerializeField] TextMeshProUGUI redMiddleText;
     [Header("緑の途中得点表示"), SerializeField] TextMeshProUGUI greenMiddleText;
@@ -193,6 +195,7 @@ public class SystemManager : MonoBehaviour
     [Header("ピザのカットを行うTimeline"), SerializeField] TimelineInfo pizzaCutTimeline;
 
     [Header("- ピザの取得 -")]
+    [Header("取得残り時間の表示"), SerializeField] TimerTimeline pickTimerTimeline;
     [Header("Timelineの情報"), SerializeField] TimelineInfo pizzaStealTimeline;
     [Header("ピザの取得シグナルトラックの名前"), SerializeField] string pizzaStealSignalTrackName;
     [Header("ピザの取得でスライスを動かすAnimationTrack"), SerializeField] string pizzaStealAnimationTrackName;
@@ -230,6 +233,10 @@ public class SystemManager : MonoBehaviour
         pizzaManager = FindObjectOfType<PizzaManager>();
 
         isStarted = false;
+
+        // 時間表示のタイミングリセット
+        cookTimerTimeline.Initalize();
+        pickTimerTimeline.Initalize();
 
         // フェーズの初期化（接続待ちフェーズに）
         currentPhase = GamePhase.ConnectPhase;
@@ -602,6 +609,9 @@ public class SystemManager : MonoBehaviour
                 }
             }
 
+            // 時間表示タイミングで表示
+            if (cookTimerTimeline != null && cookTimerTimeline.IsShowTiming(timer)) GameConstants.PlayTimeline(cookTimerTimeline.TimelineInfo.DirectorParent, cookTimerTimeline.TimelineInfo.Director);
+
             // 時間経過
             timer += Time.deltaTime;
             // 全員が食材を発射し終えたら途中でも次のフェーズへ
@@ -816,11 +826,17 @@ public class SystemManager : MonoBehaviour
                 // 次に取るピザを決定
                 pickIndexes = SelectPizzaSlices();
 
+                // 再生タイミングの経過状況をリセット
+                pickTimerTimeline.Reset();
+
                 // ピックタイミングを待つ（タイマーリセット）
                 pickTimer = GameConstants.FirstTimerValue;
             }
             // タイマーのUI更新
             UpdateClockUI(pickTimer, pickPace);
+
+            // 時間表示タイミングで表示
+            if (pickTimerTimeline != null && pickTimerTimeline.IsShowTiming(pickTimer)) GameConstants.PlayTimeline(pickTimerTimeline.TimelineInfo.DirectorParent, pickTimerTimeline.TimelineInfo.Director);
 
             // タイマー増加
             phaseTimer += Time.deltaTime;
@@ -912,4 +928,46 @@ public class TimelineInfo
 
     [Header("Timelineを動かすDirector"), SerializeField] PlayableDirector director;
     public PlayableDirector Director => director;
+}
+
+[System.Serializable]
+public class TimerTimeline
+{
+    [Header("表示するタイミング"), SerializeField] List<float> timings;
+    public List<float> Timings => timings;
+
+    [Header("Timeline情報"), SerializeField] TimelineInfo timelineInfo;
+    public TimelineInfo TimelineInfo => timelineInfo;
+
+    // どこまでタイミングが過ぎたかの番号
+    int currentIndex = GameConstants.Zero;
+
+    // タイミングの判定を行う
+    public bool IsShowTiming(float currentTime)
+    {
+        // 全てのタイミングを消化済みならfalse
+        if(currentIndex >= timings.Count) return false;
+
+        // 現在の時間が次のタイミングを超えているかチェック
+        if(currentTime >= timings[currentIndex])
+        {
+            currentIndex++;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 初期化
+    /// </summary>
+    public void Initalize()
+    {
+        // 昇順ソート
+        timings.Sort();
+
+        Reset();
+    }
+
+    public void Reset() => currentIndex = GameConstants.Zero;
 }

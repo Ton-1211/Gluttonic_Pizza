@@ -565,6 +565,12 @@ public class UDPMulti : MonoBehaviour
                         // 接続している状況の更新
                         CheckConnect(unit);
 
+                        // OSのバッファにある古い受信データを全て吸い出して捨てる
+                        while(client.Available > GameConstants.Zero)
+                        {
+                            client.Receive(ref senderEP);
+                        }
+
                         //Debug.Log($"[RECEIVE] {DateTime.Now:HH:mm:ss.fff} bytes={receivedBytes.Length} from={senderEP}");// デバッグ
                     }
                 }
@@ -579,6 +585,9 @@ public class UDPMulti : MonoBehaviour
                 }
 
             }
+
+            // バッファが空のときはCPUを休ませる
+            Thread.Sleep(ThreadSleepMillisecond);
         }
         catch (Exception exception)
         {

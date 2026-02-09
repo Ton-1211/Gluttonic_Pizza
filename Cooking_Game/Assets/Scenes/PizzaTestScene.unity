@@ -31860,7 +31860,7 @@ MonoBehaviour:
     bowStringController: {fileID: 986156400}
     directionArrow: {fileID: 1243914858}
     minArrowWidth: 0.1
-    eatModeChargeSeconds: 1
+    eatModeChargeSeconds: 2
     pullMangification: {x: 0.02, y: 0.15}
     maxDistance: 10
     basePower: 22
@@ -31872,7 +31872,7 @@ MonoBehaviour:
     bowStringController: {fileID: 770407192}
     directionArrow: {fileID: 575740708}
     minArrowWidth: 0.5
-    eatModeChargeSeconds: 1
+    eatModeChargeSeconds: 2
     pullMangification: {x: 0.01, y: 0.15}
     maxDistance: 10
     basePower: 22
@@ -31884,7 +31884,7 @@ MonoBehaviour:
     bowStringController: {fileID: 1807604930}
     directionArrow: {fileID: 391263063}
     minArrowWidth: 0.5
-    eatModeChargeSeconds: 1
+    eatModeChargeSeconds: 2
     pullMangification: {x: 0.01, y: 0.15}
     maxDistance: 10
     basePower: 22
@@ -31896,7 +31896,7 @@ MonoBehaviour:
     bowStringController: {fileID: 1982831116}
     directionArrow: {fileID: 1437723871}
     minArrowWidth: 0.5
-    eatModeChargeSeconds: 1
+    eatModeChargeSeconds: 2
     pullMangification: {x: 0.01, y: 0.15}
     maxDistance: 10
     basePower: 22
@@ -33599,6 +33599,11 @@ MonoBehaviour:
   startGameTimeline:
     directorParent: {fileID: 799865198}
     director: {fileID: 553816215}
+  cookTimerTimeline:
+    timings: []
+    timelineInfo:
+      directorParent: {fileID: 0}
+      director: {fileID: 0}
   redMiddleText: {fileID: 1925470030}
   greenMiddleText: {fileID: 899862980}
   firstBargeInTimeline:
@@ -33610,6 +33615,11 @@ MonoBehaviour:
   pizzaCutTimeline:
     directorParent: {fileID: 1984474777}
     director: {fileID: 1756918229}
+  pickTimerTimeline:
+    timings: []
+    timelineInfo:
+      directorParent: {fileID: 0}
+      director: {fileID: 0}
   pizzaStealTimeline:
     directorParent: {fileID: 593661802}
     director: {fileID: 1297761881}
@@ -68524,7 +68534,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2005751645
 RectTransform:
   m_ObjectHideFlags: 0

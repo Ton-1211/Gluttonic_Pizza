@@ -383,6 +383,9 @@ public class SystemManager : MonoBehaviour
         // すでに同期されていたらなにもしない
         if (team.Phase == phase) return;
 
+        // ログ
+        Debug.Log("フェーズ同期：" + phase);
+
         // 同期してフェーズ開始
         team.StartPhase(phase);
     }

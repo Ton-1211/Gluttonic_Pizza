@@ -828,57 +828,6 @@ public class FoodMove : MonoBehaviour
         }
     }
 
-    // 削除予定、トリガーを使用していたときのもの
-    //void OnTriggerEnter(Collider other)
-    //{
-    //    if (CompareLayer(hitMask, other.gameObject.layer))
-    //    {
-    //        // 衝突時の処理（エフェクトの再生等、マネージャーに衝突を知らせるだけにする予定（お互いで衝突処理が呼び出されて異常な速度でふっとばし合うため））
-    //        if (other.gameObject.TryGetComponent<FoodMove>(out FoodMove opponentFood))// 相手が食べ物なら
-    //        {
-    //            // 同じ根をもつ結合関係にある食べ物同士は反応させない
-    //            if (opponentFood.Root == this.Root) return;
-    //            // stageManagerが設定されていなければreturn
-    //            if (stageManager == null) return;
-
-    //            // 衝突時の相性を取得
-    //            InteractionType type = FoodInteractionRules.GetInteractionType(team, opponentFood.team, eatMode);
-
-    //            switch (type)
-    //            {
-    //                case InteractionType.Merge:
-    //                    // 爆弾化していない状態のときのみ結合
-    //                    if (!Root.bomb && !opponentFood.Root.bomb) stageManager.AddMergeEventList(this, opponentFood);
-    //                    break;
-
-    //                case InteractionType.Eat:
-    //                    // 結合済みの食材や、すでに一度捕食を行った食材は捕食機能を持たない
-    //                    if (Root == this && mergedFoods.Count == GameConstants.Zero && eatMode)
-    //                    {
-    //                        stageManager.AddEatEventList(this, opponentFood);
-    //                        eatMode = false;
-    //                    }
-    //                    else if (Root == this) stageManager.AddReflectList(this, opponentFood);
-    //                    break;
-
-    //                case InteractionType.None:
-    //                    {
-    //                        // 捕食する側の食材が吹き飛ばないように
-    //                        if (FoodInteractionRules.GetInteractionType(opponentFood.team, team, opponentFood.eatMode) != InteractionType.Eat)
-    //                            stageManager.AddReflectList(this, opponentFood);
-    //                        break;
-    //                    }
-
-    //                default:
-    //                    break;
-    //            }
-
-    //            //Reflect(myRb, oppoentRb);
-    //            //stageManager.AddReflectList(this, opponentFood);
-    //        }
-    //    }
-    //}
-
     const int DefaultCount = 1;
     /// <summary>
     /// 自身につながっている食材の総数を求める

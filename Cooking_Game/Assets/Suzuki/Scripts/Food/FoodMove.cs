@@ -88,6 +88,8 @@ public class FoodMove : MonoBehaviour
         }
     }
 
+    bool IsMerged => (mergedFoods != null && mergedFoods.Count > 0) || Root != this ;
+
     public TeamColor GetMostColor()
     {
         // 何もつながってなければ自分の色を返す
@@ -301,6 +303,22 @@ public class FoodMove : MonoBehaviour
 
         // 爆弾アニメーション
         //animator.SetBool("Bomb", bomb);
+
+        // 結合アニメーション
+        if(!animator.GetBool("Merged") && IsMerged)
+        {
+            // 結合アニメーション
+            animator.SetTrigger("OnMerge");
+
+            // 表情変化
+            animator.SetBool("Merged", true);
+        }
+
+        // 結合アニメーション終了
+        if(animator.GetBool("Merged") && !IsMerged)
+        {
+            animator.SetBool("Merged", false);
+        }
 
         // 牙のアニメーション
         if (fangAnimator == null || !fangAnimator.isActiveAndEnabled) return;

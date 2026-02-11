@@ -17,7 +17,8 @@ public class Result : MonoBehaviour
     [Header("引き分け：両チーム勝利タイムライン"), SerializeField] TimelineInfo drawTimeline;
 
     [Header("--- チームのスコア表示設定 ---")]
-    [Header("全体：数字のカウントアップ速度（数値/秒）"), SerializeField] float numCountSpeed;
+    [Header("得点ごと：数字のカウントアップ速度（数値/秒）"), SerializeField] float numCountSpeed;
+    [Header("合計:数字のカウントアップ速度（数値/秒）"), SerializeField] float sumNumCountSpeed;
 
     [Header("- 事前点表示 -")]
     [Header("カウントアニメーション終了SE"), SerializeField] PlayerSoundType prePointCountedSE;
@@ -62,7 +63,7 @@ public class Result : MonoBehaviour
         yield return ShowBothTeamScore(redFoodPointText, greenFoodPointText, redFoodScore, greenFoodScore, foodPointCountedSE);
 
         // 合計
-        yield return ShowBothTeamScore(redSumPointText, greenSumPointText, redSumScore, greenSumScore, sumPointCountedSE);
+        yield return ShowBothTeamSumScore(redSumPointText, greenSumPointText, redSumScore, greenSumScore, sumPointCountedSE);
 
         // 待つ
         yield return new WaitForSeconds(debugSccoreWaitTime);
@@ -111,6 +112,24 @@ public class Result : MonoBehaviour
         // 両チームの得点表示
         if (redTargetText != null) StartCoroutine(numberCounter.CountUpNumBySpeed(redTargetText, redScore, numCountSpeed, () => PlaySE(soundType)));
         if (greenTargetText != null) StartCoroutine(numberCounter.CountUpNumBySpeed(greenTargetText, greenScore, numCountSpeed, () => PlaySE(soundType)));
+
+        // アニメーション終了まで待つ
+        yield return new WaitUntil(() => numberCounter.IsAllFinished);
+    }
+
+    /// <summary>
+    /// 両チームの得点を表示(表示が終わるまで待つ)
+    /// </summary>
+    /// <param name="redTargetText">赤チームのテキスト</param>
+    /// <param name="greenTargetText">緑チームのテキスト</param>
+    /// <param name="redScore">赤チームのスコア</param>
+    /// <param name="greenScore">緑チームのスコア</param>
+    /// <param name="soundType">アニメーション完了時に鳴らすSE</param>
+    IEnumerator ShowBothTeamSumScore(TextMeshProUGUI redTargetText, TextMeshProUGUI greenTargetText, int redScore, int greenScore, PlayerSoundType soundType)
+    {
+        // 両チームの得点表示
+        if (redTargetText != null) StartCoroutine(numberCounter.CountUpNumBySpeed(redTargetText, redScore, sumNumCountSpeed, () => PlaySE(soundType)));
+        if (greenTargetText != null) StartCoroutine(numberCounter.CountUpNumBySpeed(greenTargetText, greenScore, sumNumCountSpeed, () => PlaySE(soundType)));
 
         // アニメーション終了まで待つ
         yield return new WaitUntil(() => numberCounter.IsAllFinished);

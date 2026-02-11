@@ -216,7 +216,7 @@ public class UDPMulti : MonoBehaviour
     bool isSending = false;                                         // 送信を行っているかどうか
     List<IPEndPoint> answerWaiting = new List<IPEndPoint>(MaxPlayerNum);       // 応答待機のリスト
     [SerializeField] List<ClientInfo> connectedPlayerInfos = new List<ClientInfo>(MaxPlayerNum);  // 接続できたプレイヤーのリスト
-    ConcurrentQueue<ReceivedUnit> messageQueue = new ConcurrentQueue<ReceivedUnit>();       // メッセージの待機列（ConCurrentQueueを使用することで複数のスレッドでも安心）
+    ConcurrentStack<ReceivedUnit> messageStack = new ConcurrentStack<ReceivedUnit>();       // メッセージの待機列（ConCurrentQueueを使用することで複数のスレッドでも安心）
     // ゲーム情報
     List<ObjectInfo> otherPlayerObjectInfo = new List<ObjectInfo>(PosDataMargin);
 
@@ -250,7 +250,7 @@ public class UDPMulti : MonoBehaviour
     void OnDestroy()
     {
         // ソケットを閉じる
-        client.Close();
+        if(client != null) client.Close();
         client = null;
     }
 
@@ -324,13 +324,14 @@ public class UDPMulti : MonoBehaviour
     void ParseMessages()
     {
         ReceivedUnit dequeued;
-        int count = 0;
-        // かつ受信メッセージがある場合
-        while (messageQueue.TryDequeue(out dequeued))
+        // 受信メッセージがある場合
+        if (messageStack.TryPop(out dequeued))
         {
             // メッセージの中身を解読
             Parse(dequeued);
-            count++;// パース回数を増加
+
+            // スタックをクリア
+            if(!messageStack.IsEmpty) messageStack.Clear();
         }
     }
 
@@ -521,7 +522,7 @@ public class UDPMulti : MonoBehaviour
                         {
                             // ClientInfoがなくてもキューに追加する
                             ReceivedUnit ConnectCheckUnit = new ReceivedUnit(senderEP, receivedBytes, new ClientInfo(senderEP.Address.ToString(), senderEP.Port));
-                            messageQueue.Enqueue(ConnectCheckUnit);
+                            messageStack.Push(ConnectCheckUnit);
                             CheckConnect(ConnectCheckUnit);// 接続状態の更新
                             continue;
                         }
@@ -559,10 +560,16 @@ public class UDPMulti : MonoBehaviour
 
                         // メッセージをキューに追加
                         ReceivedUnit unit = new ReceivedUnit(senderEP, receivedBytes, foundInfo);
-                        messageQueue.Enqueue(unit);
+                        messageStack.Push(unit);
 
                         // 接続している状況の更新
                         CheckConnect(unit);
+
+                        // OSのバッファにある古い受信データを全て吸い出して捨てる
+                        while(client.Available > GameConstants.Zero)
+                        {
+                            client.Receive(ref senderEP);
+                        }
 
                         //Debug.Log($"[RECEIVE] {DateTime.Now:HH:mm:ss.fff} bytes={receivedBytes.Length} from={senderEP}");// デバッグ
                     }
@@ -578,6 +585,9 @@ public class UDPMulti : MonoBehaviour
                 }
 
             }
+
+            // バッファが空のときはCPUを休ませる
+            Thread.Sleep(ThreadSleepMillisecond);
         }
         catch (Exception exception)
         {

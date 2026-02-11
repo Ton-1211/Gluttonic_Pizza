@@ -313,8 +313,18 @@ public class StageManager : MonoBehaviour
         // 反射リストにあったら反射する
         if (reflectList.Count > 0)
         {
+            const int reflectLimit = 10;
+            int reflectCount = GameConstants.Zero;
             for (int i = reflectList.Count - 1; i >= 0; i--)
             {
+                // 回数チェック
+                reflectCount++;
+                if (reflectCount > reflectLimit) break;
+
+                // nullチェック
+                if (reflectList[i].First.Food == null || reflectList[i].Second.Food == null) continue;
+
+                // 反射
                 Reflect(reflectList[i]);
             }
             foreach(InfoForReflect foodevent in reflectList)
@@ -324,11 +334,22 @@ public class StageManager : MonoBehaviour
             }
             reflectList.Clear();// リストをクリア
         }
+
+        const int mergeLimit = 10;
+        int mergeCount = GameConstants.Zero;
         // くっつける
         if (mergeEventList.Count > 0)
         {
             for (int i = mergeEventList.Count - 1; i >= 0; i--)
             {
+                // 回数チェック
+                mergeCount++;
+                if (mergeCount > mergeLimit) break;
+
+                // nullチェック
+                if (mergeEventList[i].First.Food == null || mergeEventList[i].Second.Food == null) continue;
+
+                // 結合
                 mergeEventList[i].First.Food.OnMerge(mergeEventList[i].Second.Food);
 
                 // 結合SE再生
@@ -346,11 +367,22 @@ public class StageManager : MonoBehaviour
             }
             mergeEventList.Clear();// リストをクリア
         }
+
+        const int eatLimit = 10;
+        int eatCount = GameConstants.Zero;
         // 食べる
         if (eatEventList.Count > 0)
         {
             for (int i = eatEventList.Count - 1; i >= 0; i--)
             {
+                // 回数チェック
+                eatCount++;
+                if(eatCount > eatLimit) break;
+
+                // nullチェック
+                if (eatEventList[i].First.Food == null || eatEventList[i].Second.Food == null) continue;
+
+                // 捕食
                 eatEventList[i].First.Food.OnEat(eatEventList[i].Second.Food, eatEventList[i].First.Velocity);
 
                 // 捕食SE再生

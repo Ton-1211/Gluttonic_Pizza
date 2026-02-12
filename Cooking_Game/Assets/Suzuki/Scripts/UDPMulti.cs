@@ -798,7 +798,7 @@ public class UDPMulti : MonoBehaviour
         //else Debug.Log("[CheckConnect] 発見不可");
     }
 
-    public void OnClickReadyButton() => myInfo.SetReadyState(myInfo.ReadyState == ReadyState.NotReady ? ReadyState.Ready : ReadyState.NotReady);// ボタンによる準備完了/未完了の切り替え
+    public void OnClickReadyButton() => myInfo.SetReadyState(ReadyState.Ready);// ボタンによる準備完了の切り替え
 
     /// <summary>
     /// 通信相手全員に自分の状態を送る

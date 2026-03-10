@@ -184,6 +184,8 @@ public class SystemManager : MonoBehaviour
     [Header("--- タイムラインの設定 ---")]
     [Header("チュートリアルのTimeline"), SerializeField] TimelineInfo tutorialTimelineInfo;
     [Header("ゲームの開始前Timeline"), SerializeField] TimelineInfo startGameTimeline;
+    [Header("ラウンド数表示Timeline（1ラウンド目）"), SerializeField] TimelineInfo round1ShowTimeline;
+    [Header("ラウンド数表示Timeline（2ラウンド目）"), SerializeField] TimelineInfo round2ShowTimeline;
     [Header("調理残り時間の表示"), SerializeField] TimerTimeline cookTimerTimeline;
 
     //[Header("ハーフタイムTimeline"), SerializeField] TimelineInfo breakTimeTimeline;
@@ -249,6 +251,11 @@ public class SystemManager : MonoBehaviour
         // デバッグ用
         //StartCoroutine(Main());
         //PlaySE_Windows(PlayerSoundType.Eat, transform);
+    }
+
+    void OnDestroy()
+    {
+        if(mainCoroutine != null) StopCoroutine(mainCoroutine);
     }
 
     /// <summary>
@@ -346,9 +353,11 @@ public class SystemManager : MonoBehaviour
         }
     }
 
+    Coroutine mainCoroutine;
+
     public void OneClickOneCycle()
     {
-        StartCoroutine(Main());
+        mainCoroutine = StartCoroutine(Main());
     }
 
     public void OnStartReady()
@@ -357,7 +366,7 @@ public class SystemManager : MonoBehaviour
         foreach (UIGroupSwitcher groupSwitcher in connectCanvases) groupSwitcher.ChangeUIGroup();
 
         // ゲーム開始
-        StartCoroutine(Main());
+        mainCoroutine = StartCoroutine(Main());
     }
 
     /// <summary>
@@ -401,6 +410,9 @@ public class SystemManager : MonoBehaviour
     {
         if (!isStarted)
         {
+            // インゲームBGMを停止(Windowsのみ)
+            StopBGM_Windows();
+
             // チュートリアルTimelineの再生
             yield return GameConstants.PlayAndWaitTimeline(tutorialTimelineInfo.DirectorParent, tutorialTimelineInfo.Director);
 
@@ -427,7 +439,7 @@ public class SystemManager : MonoBehaviour
             //yield return StartCoroutine(PizzaSelectPhase(RouletteTime, pickNum));
 
             // 食材発射フェーズ
-            yield return StartCoroutine(ShootFoodPhase(shootPhaseTime));
+            yield return StartCoroutine(ShootFoodPhase(shootPhaseTime, counter));
 
             // ピザ取得待機フェーズ
             yield return StartCoroutine(PreparePickPizzaPhase(breakPhaseTime, counter));
@@ -535,8 +547,9 @@ public class SystemManager : MonoBehaviour
     /// 食材発射フェーズ
     /// </summary>
     /// <param name="shootTime">発射可能時間</param>
+    /// <param name="roundCounter">ラウンドのカウンター</param>
     /// <returns></returns>
-    IEnumerator ShootFoodPhase(float shootTime)
+    IEnumerator ShootFoodPhase(float shootTime, int roundCounter)
     {
         // インゲームBGMを再生(Windowsのみ)
         PlayBGM_Windows(BGMType.InGame);
@@ -582,6 +595,10 @@ public class SystemManager : MonoBehaviour
 
         // 元の位置に戻す
         pizzaManager.SetAllPizzaStartPosition();
+
+        // ラウンド数を表示するアニメーション
+        TimelineInfo cullentRoundTimeline = roundCounter + 1 != PhaseCount ? round1ShowTimeline : round2ShowTimeline;
+        yield return GameConstants.PlayAndWaitTimeline(cullentRoundTimeline.DirectorParent, cullentRoundTimeline.Director);
 
         // 時計のFillAmountをMaxにするアニメーション
         yield return FillClock(clockFillTime);

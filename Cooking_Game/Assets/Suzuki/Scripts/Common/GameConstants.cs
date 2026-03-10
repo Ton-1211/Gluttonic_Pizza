@@ -41,6 +41,14 @@ public static class GameConstants
         return new Vector3(first.x * second.x, first.y * second.y, first.z * second.z);
     }
 
+    // リストのクリア
+    public static void ClearList<T>(List<T> targetList)
+    {
+        if (targetList == null) return;
+
+        targetList.Clear();
+    }
+
     /// <summary>
     /// トラックへと割り当てる
     /// </summary>

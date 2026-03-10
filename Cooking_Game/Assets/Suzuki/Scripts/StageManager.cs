@@ -254,6 +254,11 @@ public class StageManager : MonoBehaviour
             trackObjects[i].SetCursorInfo();
         }
 
+        // リストの初期化
+        GameConstants.ClearList(reflectList);
+        GameConstants.ClearList(mergeEventList);
+        GameConstants.ClearList(eatEventList);
+
         // Androidのみ振動を有効化
         if (vibrateManager.IsAndroid) vibrateManager.EnableVibrate();
     }

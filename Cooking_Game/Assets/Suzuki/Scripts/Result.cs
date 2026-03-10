@@ -45,7 +45,7 @@ public class Result : MonoBehaviour
     NumberCountUp numberCounter = new NumberCountUp();
 
     // リザルト画面表示、timelineからのsignalでの呼び出しを考慮して細かく分けるかも
-    public IEnumerator ShowResult(float debugReloadTime = 5f, float debugSccoreWaitTime = 2f)
+    public IEnumerator ShowResult(float debugReloadTime = 5f, float debugScoreWaitTime = 2f)
     {
         if (resultGroup != null) resultGroup.SetActive(true);// リザルトUIを有効化
 
@@ -66,7 +66,7 @@ public class Result : MonoBehaviour
         yield return ShowBothTeamSumScore(redSumPointText, greenSumPointText, redSumScore, greenSumScore, sumPointCountedSE);
 
         // 待つ
-        yield return new WaitForSeconds(debugSccoreWaitTime);
+        yield return new WaitForSeconds(debugScoreWaitTime);
 
         // 非同期でカーテンのTimeline再生
         yield return GameConstants.PlayTimeline(curtainTimeline.DirectorParent, curtainTimeline.Director);

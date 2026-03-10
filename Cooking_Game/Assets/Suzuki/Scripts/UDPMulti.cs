@@ -6,6 +6,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.IO;
+using System.IO.Compression;
+using System.Text;
 using UnityEngine;
 
 public class UDPMulti : MonoBehaviour
@@ -202,7 +205,8 @@ public class UDPMulti : MonoBehaviour
     const int MaxPlayerNum = 4;                                     // 最大プレイヤー数
     const int MessageStackSize = 30;                                // メッセージの待機列のサイズ
     const int PosDataMargin = 3;                                    // 受け取った位置情報の保有可能量
-    const int RecieveBufferSize = 65536;                            // 受信バッファのサイズ
+    const int RecieveBufferSize = 1048576;                          // 受信バッファのサイズ
+    const int SendBufferSize = 1048576;                             // 送信バッファのサイズ
     const int ThreadSleepMillisecond = 1;                           // スレッドの処理を一時停止する時間（ミリ秒）
 
     static int sendPerSecond = 10;                                // 1秒に何回送信するか
@@ -224,6 +228,7 @@ public class UDPMulti : MonoBehaviour
     {
         client = new UdpClient(new IPEndPoint(IPAddress.Any, myInfo.Port));
         client.Client.ReceiveBufferSize = RecieveBufferSize;
+        client.Client.SendBufferSize = SendBufferSize;
 
         isReceiving = true;
         receiveThread = new Thread(new ThreadStart(ThreadReceive));
@@ -249,9 +254,15 @@ public class UDPMulti : MonoBehaviour
     /// </summary>
     void OnDestroy()
     {
+        isReceiving = false;
+
         // ソケットを閉じる
-        if(client != null) client.Close();
-        client = null;
+        if (client != null)
+        {
+            client.Close();
+            client.Dispose();
+            client = null;
+        }
     }
 
     float debugTimer = 0f;
@@ -524,6 +535,9 @@ public class UDPMulti : MonoBehaviour
                             ReceivedUnit ConnectCheckUnit = new ReceivedUnit(senderEP, receivedBytes, new ClientInfo(senderEP.Address.ToString(), senderEP.Port));
                             messageStack.Push(ConnectCheckUnit);
                             CheckConnect(ConnectCheckUnit);// 接続状態の更新
+
+                            // CPUを休ませる
+                            Thread.Sleep(ThreadSleepMillisecond);
                             continue;
                         }
 
@@ -570,7 +584,7 @@ public class UDPMulti : MonoBehaviour
                         {
                             client.Receive(ref senderEP);
                         }
-
+                        
                         //Debug.Log($"[RECEIVE] {DateTime.Now:HH:mm:ss.fff} bytes={receivedBytes.Length} from={senderEP}");// デバッグ
                     }
                 }
@@ -584,10 +598,9 @@ public class UDPMulti : MonoBehaviour
 
                 }
 
+                // バッファが空のときはCPUを休ませる
+                Thread.Sleep(ThreadSleepMillisecond);
             }
-
-            // バッファが空のときはCPUを休ませる
-            Thread.Sleep(ThreadSleepMillisecond);
         }
         catch (Exception exception)
         {
@@ -1047,8 +1060,27 @@ static class MultiPlayerMessenger
     public static byte[] ToByte(this UDPMulti.ClientInfo clientInfo)
     {
         string infoJson = JsonUtility.ToJson(clientInfo);// Json形式に変更
-        return System.Text.Encoding.UTF8.GetBytes(infoJson);
+        //return System.Text.Encoding.UTF8.GetBytes(infoJson);
+        return CompressJson(infoJson);
     }
+    // JSON文字列を圧縮されたバイト配列に変換
+    static byte[] CompressJson(string json)
+    {
+        // バイト配列に変換
+        byte[] rawData = Encoding.UTF8.GetBytes((string)json);
+        
+        // 圧縮
+        using(MemoryStream memoryStream = new MemoryStream())
+        {
+            using(GZipStream gzip = new GZipStream(memoryStream, CompressionMode.Compress))
+            {
+                gzip.Write(rawData, 0, rawData.Length);
+            }
+
+            return memoryStream.ToArray();
+        }
+    }
+
     public static byte[] ToByte(this Vector3 vector3)
     {
         byte[] x = BitConverter.GetBytes(vector3.x);
@@ -1066,9 +1098,41 @@ static class MultiPlayerMessenger
     }
     public static UDPMulti.ClientInfo ToClientInfo(this byte[] bytes, int startIndex = 0)
     {
-        string infoJson = System.Text.Encoding.UTF8.GetString(bytes, startIndex, bytes.Length - startIndex);// Json部分を抽出
+        //string infoJson = System.Text.Encoding.UTF8.GetString(bytes, startIndex, bytes.Length - startIndex);// Json部分を抽出
+        byte[] compressedBytes = new byte[bytes.Length - startIndex];
+        System.Buffer.BlockCopy(bytes, startIndex, compressedBytes, 0, compressedBytes.Length);
+
+        string infoJson = DecompressJson(compressedBytes);
+
+        // 解凍失敗ならnull
+        if(string.IsNullOrEmpty(infoJson))
+        {
+            return null;
+        }
+
         return JsonUtility.FromJson<UDPMulti.ClientInfo>(infoJson);// 本来の形式に直す
     }
+
+    // バイト配列をJSON文字列に復元
+    static string DecompressJson(byte[] compressedData)
+    {
+        // 解凍
+        try
+        {
+            using (MemoryStream memoryStream = new MemoryStream(compressedData))
+            using (GZipStream gzip = new GZipStream(memoryStream, CompressionMode.Decompress))
+            using (StreamReader streamReader = new StreamReader(gzip, Encoding.UTF8))
+            {
+                return streamReader.ReadToEnd();
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"解凍失敗:{e.Message}");
+            return null;
+        }
+    }
+
     public static TeamColor ToTeamColor(this byte[] bytes, int startIndex = 0)
     {
         int number = BitConverter.ToInt32(bytes, startIndex);

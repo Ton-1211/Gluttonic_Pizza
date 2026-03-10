@@ -143,6 +143,12 @@ public class FoodMove : MonoBehaviour
         isGround = false;
     }
 
+    void OnDestroy()
+    {
+        // 起爆カウントエフェクトの非表示化
+        if (bombCountEffectObject != null && bombCountEffectObject.activeSelf) bombCountEffectObject.SetActive(false);
+    }
+
     /// <summary>
     /// 捕食モードを有効化する
     /// </summary>

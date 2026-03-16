@@ -263,6 +263,17 @@ public class UDPMulti : MonoBehaviour
             client.Dispose();
             client = null;
         }
+
+        // スレッドが完全に終了するまでメインスレッドを待機
+        if(receiveThread != null && receiveThread.IsAlive)
+        {
+            if(!receiveThread.Join(50))
+            {
+                receiveThread.Abort();
+            }
+
+            receiveThread = null;
+        }
     }
 
     float debugTimer = 0f;
@@ -511,28 +522,42 @@ public class UDPMulti : MonoBehaviour
     {
         try
         {
-            Debug.Log("Thread Receive Started");
+            //Debug.Log("Thread Receive Started");
             while (isReceiving)
             {
+                // データが届いていないときは休む
+                if(client.Available == GameConstants.Zero)
+                {
+                    Thread.Sleep(ThreadSleepMillisecond);
+                    continue;
+                }
+
+                byte[] latestBytes = null;
                 IPEndPoint senderEP = new IPEndPoint(IPAddress.Any, GameConstants.Zero);
-                Debug.Log("Waiting for UDP...");
+                //Debug.Log("Waiting for UDP...");
 
                 try// 情報を受け取れないときに切断されないようにしている
                 {
-                    byte[] receivedBytes = client.Receive(ref senderEP);
-                    Debug.Log($"受信成功 bytes={receivedBytes.Length}");// デバッグ
+                    //byte[] receivedBytes = client.Receive(ref senderEP);
+                    //Debug.Log($"受信成功 bytes={receivedBytes.Length}");// デバッグ
+
+                    // バッファの中の最新を取得（古いものは捨てる）
+                    while(client.Available > GameConstants.Zero)
+                    {
+                        latestBytes = client.Receive(ref senderEP);
+                    }
 
                     // メッセージの長さチェック
-                    if (receivedBytes != null && receivedBytes.Length >= sizeof(Int32))
+                    if (latestBytes != null && latestBytes.Length >= sizeof(Int32))
                     {
                         // メッセージの種類を判別
-                        UDPMessageType type = receivedBytes.ToUDPMessageType();
+                        UDPMessageType type = latestBytes.ToUDPMessageType();
 
                         // 接続生存確認のメッセージやホストからのメッセージのとき
                         if (type == UDPMessageType.ConnectCheck || type == UDPMessageType.HostMessage)
                         {
                             // ClientInfoがなくてもキューに追加する
-                            ReceivedUnit ConnectCheckUnit = new ReceivedUnit(senderEP, receivedBytes, new ClientInfo(senderEP.Address.ToString(), senderEP.Port));
+                            ReceivedUnit ConnectCheckUnit = new ReceivedUnit(senderEP, latestBytes, new ClientInfo(senderEP.Address.ToString(), senderEP.Port));
                             messageStack.Push(ConnectCheckUnit);
                             CheckConnect(ConnectCheckUnit);// 接続状態の更新
 
@@ -546,7 +571,7 @@ public class UDPMulti : MonoBehaviour
                         {
                             // 接続時
                             // UDPMessage型のメッセージの先にあるJsonファイルから、ClientInfoを取得する
-                            foundInfo = SearchClientInfo(receivedBytes.ToClientInfo(sizeof(Int32)));
+                            foundInfo = SearchClientInfo(latestBytes.ToClientInfo(sizeof(Int32)));
                         }
                         catch
                         {
@@ -558,7 +583,7 @@ public class UDPMulti : MonoBehaviour
                         if (foundInfo == null)
                         {
                             // 通信時
-                            string objectInfoJson = System.Text.Encoding.UTF8.GetString(receivedBytes, sizeof(Int32), receivedBytes.Length - sizeof(Int32));// UDPMessage型のメッセージの先
+                            string objectInfoJson = System.Text.Encoding.UTF8.GetString(latestBytes, sizeof(Int32), latestBytes.Length - sizeof(Int32));// UDPMessage型のメッセージの先
                                                                                                                                                             //Debug.Log($"[RAW MESSAGE] {objectInfoJson}");
                             ObjectInfo objectInfo = JsonUtility.FromJson<ObjectInfo>(objectInfoJson);// ObjectInfoを取得
 
@@ -573,17 +598,11 @@ public class UDPMulti : MonoBehaviour
                         }
 
                         // メッセージをキューに追加
-                        ReceivedUnit unit = new ReceivedUnit(senderEP, receivedBytes, foundInfo);
+                        ReceivedUnit unit = new ReceivedUnit(senderEP, latestBytes, foundInfo);
                         messageStack.Push(unit);
 
                         // 接続している状況の更新
                         CheckConnect(unit);
-
-                        // OSのバッファにある古い受信データを全て吸い出して捨てる
-                        while(client.Available > GameConstants.Zero)
-                        {
-                            client.Receive(ref senderEP);
-                        }
                         
                         //Debug.Log($"[RECEIVE] {DateTime.Now:HH:mm:ss.fff} bytes={receivedBytes.Length} from={senderEP}");// デバッグ
                     }
@@ -604,12 +623,12 @@ public class UDPMulti : MonoBehaviour
         }
         catch (Exception exception)
         {
-            Debug.LogError("ThreadReceive Exception" + exception);
+            //Debug.LogError("ThreadReceive Exception" + exception);
         }
 
         finally
         {
-            Debug.LogWarning("ThreadReceive Ended");
+            //Debug.LogWarning("ThreadReceive Ended");
         }
         //Debug.LogWarning("受信スレッド終了");// デバッグ
     }

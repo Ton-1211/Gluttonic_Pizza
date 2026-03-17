@@ -420,6 +420,9 @@ public class SystemManager : MonoBehaviour
             yield return GameConstants.PlayAndWaitTimeline(startGameTimeline.DirectorParent, startGameTimeline.Director);
 
             isStarted = true;
+
+            // ゲーム開始時
+            currentPhase = GamePhase.InGame;
         }
         int counter = GameConstants.Zero;
 
